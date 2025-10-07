@@ -54,6 +54,7 @@ type Grade = {
   grade: number;
   date: string;
   teacherId: string;
+  type: 'ОТВ' | 'КР' | 'ДЗ' | 'ПР' | 'Д' | 'СР' | 'ПРКТ';
 };
 
 type Homework = {
@@ -98,6 +99,7 @@ const Index = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
   const [schedules, setSchedules] = useState<ScheduleLesson[]>([]);
+  const [subjects, setSubjects] = useState<string[]>(['Математика', 'Русский язык', 'Литература', 'Физика', 'Химия', 'История', 'Обществознание', 'Английский язык']);
 
   const [newClassName, setNewClassName] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -126,11 +128,14 @@ const Index = () => {
   const [newGrade, setNewGrade] = useState({
     studentId: '',
     subject: '',
-    grade: 5
+    grade: 5,
+    type: 'ОТВ' as 'ОТВ' | 'КР' | 'ДЗ' | 'ПР' | 'Д' | 'СР' | 'ПРКТ'
   });
 
-  const subjects = ['Математика', 'Русский язык', 'Литература', 'Физика', 'Химия', 'История', 'Обществознание', 'Английский язык'];
+  const [newSubject, setNewSubject] = useState('');
+
   const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+  const gradeTypes = ['ОТВ', 'КР', 'ДЗ', 'ПР', 'Д', 'СР', 'ПРКТ'] as const;
 
   const handleLogin = () => {
     const user = users.find(u => u.login === loginInput && u.password === passwordInput);
@@ -231,8 +236,19 @@ const Index = () => {
         date: new Date().toLocaleDateString(),
         teacherId: currentUser.id
       }]);
-      setNewGrade({ studentId: '', subject: '', grade: 5 });
+      setNewGrade({ studentId: '', subject: '', grade: 5, type: 'ОТВ' });
     }
+  };
+
+  const addSubject = () => {
+    if (newSubject && !subjects.includes(newSubject)) {
+      setSubjects([...subjects, newSubject]);
+      setNewSubject('');
+    }
+  };
+
+  const deleteSubject = (subject: string) => {
+    setSubjects(subjects.filter(s => s !== subject));
   };
 
   const getStudentGrades = (studentId: string) => {
@@ -350,6 +366,10 @@ const Index = () => {
               <TabsTrigger value="users" className="gap-2">
                 <Icon name="UserCog" size={18} />
                 Пользователи
+              </TabsTrigger>
+              <TabsTrigger value="subjects" className="gap-2">
+                <Icon name="BookText" size={18} />
+                Предметы
               </TabsTrigger>
               <TabsTrigger value="schedule" className="gap-2">
                 <Icon name="Calendar" size={18} />
@@ -679,6 +699,63 @@ const Index = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="subjects" className="space-y-4">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Icon name="BookText" size={24} />
+                    Управление предметами
+                  </h2>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="bg-success hover:bg-success/90">
+                        <Icon name="Plus" size={18} className="mr-2" />
+                        Добавить предмет
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Добавить предмет</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Название предмета</Label>
+                          <Input
+                            placeholder="Например: География"
+                            value={newSubject}
+                            onChange={(e) => setNewSubject(e.target.value)}
+                          />
+                        </div>
+                        <Button onClick={addSubject} className="w-full bg-success hover:bg-success/90">
+                          Добавить
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {subjects.map((subject) => (
+                    <Card key={subject} className="p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 rounded-lg p-2">
+                          <Icon name="Book" size={20} className="text-primary" />
+                        </div>
+                        <p className="font-medium">{subject}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteSubject(subject)}
+                      >
+                        <Icon name="Trash2" size={16} className="text-destructive" />
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="schedule" className="space-y-4">
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -962,6 +1039,10 @@ const Index = () => {
                 <Icon name="Award" size={18} />
                 Выставить оценки
               </TabsTrigger>
+              <TabsTrigger value="schedule" className="gap-2">
+                <Icon name="Calendar" size={18} />
+                Расписание
+              </TabsTrigger>
               <TabsTrigger value="homework" className="gap-2">
                 <Icon name="BookOpen" size={18} />
                 Домашние задания
@@ -975,92 +1056,179 @@ const Index = () => {
                   Выставление оценок
                 </h2>
 
-                <div className="grid gap-4 md:grid-cols-2 mb-6">
-                  <div className="space-y-2">
-                    <Label>Ученик</Label>
-                    <Select value={newGrade.studentId} onValueChange={(v) => setNewGrade({...newGrade, studentId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите ученика" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-6">
+                  {teacherSubjects.map(subject => {
+                    const subjectStudents = students.filter(s => {
+                      const studentClass = classes.find(c => c.id === s.classId);
+                      return studentClass && schedules.some(sch => 
+                        sch.classId === studentClass.id && 
+                        sch.subject === subject && 
+                        sch.teacherId === currentUser?.id
+                      );
+                    });
 
-                  <div className="space-y-2">
-                    <Label>Предмет</Label>
-                    <Select value={newGrade.subject} onValueChange={(v) => setNewGrade({...newGrade, subject: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите предмет" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teacherSubjects.map(s => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    if (subjectStudents.length === 0) return null;
 
-                  <div className="space-y-2">
-                    <Label>Оценка</Label>
-                    <Select value={String(newGrade.grade)} onValueChange={(v) => setNewGrade({...newGrade, grade: Number(v)})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-end">
-                    <Button onClick={addGrade} className="w-full bg-success hover:bg-success/90">
-                      <Icon name="Plus" size={18} className="mr-2" />
-                      Добавить оценку
-                    </Button>
-                  </div>
+                    return (
+                      <Card key={subject} className="p-4">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Icon name="BookOpen" size={20} className="text-primary" />
+                          {subject}
+                        </h3>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-[200px]">Ученик</TableHead>
+                                <TableHead className="w-[100px]">Класс</TableHead>
+                                <TableHead className="w-[80px]">Оценка</TableHead>
+                                <TableHead className="w-[120px]">Тип</TableHead>
+                                <TableHead className="w-[100px]"></TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {subjectStudents.map(student => (
+                                <TableRow key={student.id}>
+                                  <TableCell className="font-medium">{student.name}</TableCell>
+                                  <TableCell>{classes.find(c => c.id === student.classId)?.name}</TableCell>
+                                  <TableCell>
+                                    <Select 
+                                      value={newGrade.studentId === student.id && newGrade.subject === subject ? String(newGrade.grade) : '5'}
+                                      onValueChange={(v) => setNewGrade({
+                                        studentId: student.id,
+                                        subject: subject,
+                                        grade: Number(v),
+                                        type: newGrade.type
+                                      })}
+                                    >
+                                      <SelectTrigger className="w-[70px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="5">5</SelectItem>
+                                        <SelectItem value="4">4</SelectItem>
+                                        <SelectItem value="3">3</SelectItem>
+                                        <SelectItem value="2">2</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Select
+                                      value={newGrade.studentId === student.id && newGrade.subject === subject ? newGrade.type : 'ОТВ'}
+                                      onValueChange={(v) => setNewGrade({
+                                        ...newGrade,
+                                        studentId: student.id,
+                                        subject: subject,
+                                        type: v as typeof newGrade.type
+                                      })}
+                                    >
+                                      <SelectTrigger className="w-[100px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {gradeTypes.map(type => (
+                                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button 
+                                      size="sm"
+                                      onClick={() => {
+                                        if (newGrade.studentId === student.id && newGrade.subject === subject) {
+                                          addGrade();
+                                        } else {
+                                          setNewGrade({
+                                            studentId: student.id,
+                                            subject: subject,
+                                            grade: 5,
+                                            type: 'ОТВ'
+                                          });
+                                          addGrade();
+                                        }
+                                      }}
+                                      className="bg-success hover:bg-success/90"
+                                    >
+                                      <Icon name="Plus" size={14} className="mr-1" />
+                                      Поставить
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        
+                        <div className="mt-6">
+                          <h4 className="font-medium text-sm mb-3">История оценок по предмету</h4>
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {grades
+                              .filter(g => g.subject === subject && teacherSubjects.includes(g.subject))
+                              .slice(-10)
+                              .reverse()
+                              .map(grade => {
+                                const student = users.find(u => u.id === grade.studentId);
+                                return (
+                                  <div key={grade.id} className="flex items-center gap-3 bg-muted/50 rounded p-2 text-sm">
+                                    <span className="flex-1">{student?.name}</span>
+                                    <Badge className={
+                                      grade.grade === 5 ? 'bg-success' : 
+                                      grade.grade === 4 ? 'bg-primary' : 
+                                      grade.grade === 3 ? 'bg-warning' : 'bg-destructive'
+                                    }>
+                                      {grade.grade}
+                                    </Badge>
+                                    <Badge variant="outline">{grade.type}</Badge>
+                                    <span className="text-xs text-muted-foreground">{grade.date}</span>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
+              </Card>
+            </TabsContent>
 
-                <div className="mt-8">
-                  <h3 className="font-semibold mb-4">Последние оценки</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ученик</TableHead>
-                        <TableHead>Предмет</TableHead>
-                        <TableHead>Оценка</TableHead>
-                        <TableHead>Дата</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grades
-                        .filter(g => teacherSubjects.includes(g.subject))
-                        .slice(-10)
-                        .reverse()
-                        .map(grade => (
-                          <TableRow key={grade.id}>
-                            <TableCell>{users.find(u => u.id === grade.studentId)?.name}</TableCell>
-                            <TableCell>{grade.subject}</TableCell>
-                            <TableCell>
-                              <Badge className={
-                                grade.grade === 5 ? 'bg-success' : 
-                                grade.grade === 4 ? 'bg-primary' : 
-                                grade.grade === 3 ? 'bg-warning' : 'bg-destructive'
-                              }>
-                                {grade.grade}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{grade.date}</TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
+            <TabsContent value="schedule" className="space-y-4">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <Icon name="Calendar" size={24} />
+                  Моё расписание
+                </h2>
+
+                <div className="space-y-4">
+                  {daysOfWeek.map(day => {
+                    const dayLessons = schedules.filter(s => 
+                      s.dayOfWeek === day && 
+                      s.teacherId === currentUser?.id
+                    );
+                    if (dayLessons.length === 0) return null;
+                    
+                    return (
+                      <div key={day} className="space-y-2">
+                        <h3 className="font-semibold text-primary">{day}</h3>
+                        <div className="grid gap-2">
+                          {dayLessons.map(lesson => {
+                            const lessonClass = classes.find(c => c.id === lesson.classId);
+                            return (
+                              <Card key={lesson.id} className="p-3 flex items-center justify-between">
+                                <div className="space-y-1">
+                                  <p className="font-medium">{lesson.subject}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {lesson.time} • {lessonClass?.name}
+                                  </p>
+                                </div>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </Card>
             </TabsContent>
@@ -1124,6 +1292,283 @@ const Index = () => {
                         <div className="space-y-2">
                           <Label>Срок сдачи</Label>
                           <Input
+                            type="date"
+                            value={newHomework.dueDate}
+                            onChange={(e) => setNewHomework({...newHomework, dueDate: e.target.value})}
+                          />
+                        </div>
+
+                        <Button onClick={addHomework} className="w-full bg-success hover:bg-success/90">
+                          Добавить
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <div className="space-y-3">
+                  {homeworks
+                    .filter(hw => teacherSubjects.includes(hw.subject))
+                    .map(hw => (
+                      <Card key={hw.id} className="p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-warning">{hw.subject}</Badge>
+                              <Badge variant="outline">{classes.find(c => c.id === hw.classId)?.name}</Badge>
+                            </div>
+                            <p className="text-sm">{hw.description}</p>
+                            {hw.dueDate && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Icon name="Calendar" size={14} />
+                                Срок: {new Date(hw.dueDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                          {hw.teacherId === currentUser?.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteHomework(hw.id)}
+                            >
+                              <Icon name="Trash2" size={16} className="text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
+    );
+  }
+
+  if (currentUser?.role === 'student') {
+    const studentGrades = getStudentGrades(currentUser.id);
+    const studentClass = classes.find(c => c.id === currentUser.classId);
+    const classHomeworks = homeworks.filter(hw => hw.classId === currentUser.classId);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-success/5 via-background to-primary/5">
+        <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-success rounded-xl p-2">
+                <Icon name="User" size={28} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Электронный дневник</h1>
+                <p className="text-sm text-muted-foreground">{currentUser.name} • {studentClass?.name || 'Без класса'}</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              <Icon name="LogOut" size={18} className="mr-2" />
+              Выйти
+            </Button>
+          </div>
+        </header>
+
+        <main className="container mx-auto p-4 md:p-6">
+          <Tabs defaultValue="grades" className="space-y-6">
+            <TabsList className="bg-white p-1 shadow-sm">
+              <TabsTrigger value="grades" className="gap-2">
+                <Icon name="Award" size={18} />
+                Мои оценки
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="gap-2">
+                <Icon name="Calendar" size={18} />
+                Расписание
+              </TabsTrigger>
+              <TabsTrigger value="homework" className="gap-2">
+                <Icon name="BookOpen" size={18} />
+                Домашние задания
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="grades" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {subjects.map(subject => {
+                  const avg = getAverageBySubject(currentUser.id, subject);
+                  const subjectGrades = studentGrades.filter(g => g.subject === subject);
+                  
+                  return (
+                    <Card key={subject} className="p-6 hover:shadow-lg transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="bg-primary/10 rounded-xl p-3">
+                          <Icon name="BookOpen" size={24} className="text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm">{subject}</h3>
+                          <p className="text-2xl font-bold mt-1">
+                            {avg > 0 ? avg : '-'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {subjectGrades.slice(-5).map(g => (
+                          <div key={g.id} className="flex flex-col items-center">
+                            <Badge 
+                              className={
+                                g.grade === 5 ? 'bg-success' : 
+                                g.grade === 4 ? 'bg-primary' : 
+                                g.grade === 3 ? 'bg-warning' : 'bg-destructive'
+                              }
+                            >
+                              {g.grade}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground mt-0.5">{g.type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Icon name="TrendingUp" size={20} />
+                  Средний балл по предметам
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={subjects.map(s => ({
+                    subject: s,
+                    average: Number(getAverageBySubject(currentUser.id, s))
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="subject" angle={-45} textAnchor="end" height={100} />
+                    <YAxis domain={[0, 5]} />
+                    <Tooltip />
+                    <Bar dataKey="average" fill="hsl(var(--success))" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Icon name="History" size={20} />
+                  История оценок
+                </h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Предмет</TableHead>
+                      <TableHead>Оценка</TableHead>
+                      <TableHead>Тип</TableHead>
+                      <TableHead>Дата</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {studentGrades.slice(-15).reverse().map(grade => (
+                      <TableRow key={grade.id}>
+                        <TableCell>{grade.subject}</TableCell>
+                        <TableCell>
+                          <Badge className={
+                            grade.grade === 5 ? 'bg-success' : 
+                            grade.grade === 4 ? 'bg-primary' : 
+                            grade.grade === 3 ? 'bg-warning' : 'bg-destructive'
+                          }>
+                            {grade.grade}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{grade.type}</Badge>
+                        </TableCell>
+                        <TableCell>{grade.date}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="schedule" className="space-y-4">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <Icon name="Calendar" size={24} />
+                  Расписание {studentClass?.name}
+                </h2>
+
+                <div className="space-y-4">
+                  {daysOfWeek.map(day => {
+                    const dayLessons = schedules.filter(s => 
+                      s.dayOfWeek === day && 
+                      s.classId === currentUser.classId
+                    );
+                    if (dayLessons.length === 0) return null;
+                    
+                    return (
+                      <div key={day} className="space-y-2">
+                        <h3 className="font-semibold text-primary">{day}</h3>
+                        <div className="grid gap-2">
+                          {dayLessons.map(lesson => {
+                            const teacher = users.find(u => u.id === lesson.teacherId);
+                            return (
+                              <Card key={lesson.id} className="p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="space-y-1">
+                                    <p className="font-medium">{lesson.subject}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {lesson.time} • {teacher?.name || 'Учитель не назначен'}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline">{lesson.time}</Badge>
+                                </div>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="homework" className="space-y-4">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <Icon name="BookOpen" size={24} />
+                  Домашние задания для {studentClass?.name}
+                </h2>
+
+                <div className="space-y-3">
+                  {classHomeworks.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет домашних заданий</p>
+                  ) : (
+                    classHomeworks.map(hw => (
+                      <Card key={hw.id} className="p-4 hover:shadow-md transition-shadow">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-primary">{hw.subject}</Badge>
+                            {hw.dueDate && (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <Icon name="Calendar" size={12} />
+                                {new Date(hw.dueDate).toLocaleDateString()}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm">{hw.description}</p>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export default Index;
                             type="date"
                             value={newHomework.dueDate}
                             onChange={(e) => setNewHomework({...newHomework, dueDate: e.target.value})}
