@@ -62,6 +62,16 @@ type Homework = {
   description: string;
   dueDate: string;
   classId: string;
+  teacherId?: string;
+};
+
+type ScheduleLesson = {
+  id: string;
+  classId: string;
+  dayOfWeek: string;
+  time: string;
+  subject: string;
+  teacherId: string;
 };
 
 const Index = () => {
@@ -87,6 +97,7 @@ const Index = () => {
 
   const [grades, setGrades] = useState<Grade[]>([]);
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleLesson[]>([]);
 
   const [newClassName, setNewClassName] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -104,6 +115,14 @@ const Index = () => {
     classId: ''
   });
 
+  const [newSchedule, setNewSchedule] = useState({
+    classId: '',
+    dayOfWeek: '',
+    time: '',
+    subject: '',
+    teacherId: ''
+  });
+
   const [newGrade, setNewGrade] = useState({
     studentId: '',
     subject: '',
@@ -111,6 +130,7 @@ const Index = () => {
   });
 
   const subjects = ['Математика', 'Русский язык', 'Литература', 'Физика', 'Химия', 'История', 'Обществознание', 'Английский язык'];
+  const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 
   const handleLogin = () => {
     const user = users.find(u => u.login === loginInput && u.password === passwordInput);
@@ -178,10 +198,29 @@ const Index = () => {
     if (newHomework.subject && newHomework.description && newHomework.classId) {
       setHomeworks([...homeworks, { 
         id: Date.now().toString(), 
-        ...newHomework 
+        ...newHomework,
+        teacherId: currentUser?.id
       }]);
       setNewHomework({ subject: '', description: '', dueDate: '', classId: '' });
     }
+  };
+
+  const deleteHomework = (id: string) => {
+    setHomeworks(homeworks.filter(h => h.id !== id));
+  };
+
+  const addSchedule = () => {
+    if (newSchedule.classId && newSchedule.dayOfWeek && newSchedule.subject && newSchedule.teacherId) {
+      setSchedules([...schedules, {
+        id: Date.now().toString(),
+        ...newSchedule
+      }]);
+      setNewSchedule({ classId: '', dayOfWeek: '', time: '', subject: '', teacherId: '' });
+    }
+  };
+
+  const deleteSchedule = (id: string) => {
+    setSchedules(schedules.filter(s => s.id !== id));
   };
 
   const addGrade = () => {
@@ -311,6 +350,10 @@ const Index = () => {
               <TabsTrigger value="users" className="gap-2">
                 <Icon name="UserCog" size={18} />
                 Пользователи
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="gap-2">
+                <Icon name="Calendar" size={18} />
+                Расписание
               </TabsTrigger>
               <TabsTrigger value="homework" className="gap-2">
                 <Icon name="BookOpen" size={18} />
@@ -636,6 +679,149 @@ const Index = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="schedule" className="space-y-4">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Icon name="Calendar" size={24} />
+                    Управление расписанием
+                  </h2>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="bg-success hover:bg-success/90">
+                        <Icon name="Plus" size={18} className="mr-2" />
+                        Добавить урок
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Добавить урок в расписание</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Класс</Label>
+                          <Select value={newSchedule.classId} onValueChange={(v) => setNewSchedule({...newSchedule, classId: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите класс" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {classes.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>День недели</Label>
+                          <Select value={newSchedule.dayOfWeek} onValueChange={(v) => setNewSchedule({...newSchedule, dayOfWeek: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите день" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {daysOfWeek.map(d => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Время</Label>
+                          <Input
+                            type="time"
+                            value={newSchedule.time}
+                            onChange={(e) => setNewSchedule({...newSchedule, time: e.target.value})}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Предмет</Label>
+                          <Select value={newSchedule.subject} onValueChange={(v) => setNewSchedule({...newSchedule, subject: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите предмет" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {subjects.map(s => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Учитель</Label>
+                          <Select value={newSchedule.teacherId} onValueChange={(v) => setNewSchedule({...newSchedule, teacherId: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите учителя" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {users.filter(u => u.role === 'teacher').map(t => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Button onClick={addSchedule} className="w-full bg-success hover:bg-success/90">
+                          Добавить
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  {classes.map(cls => {
+                    const classSchedule = schedules.filter(s => s.classId === cls.id);
+                    return (
+                      <Card key={cls.id} className="p-6">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <Icon name="School" size={20} />
+                          Расписание {cls.name}
+                        </h3>
+                        {classSchedule.length === 0 ? (
+                          <p className="text-muted-foreground text-sm">Расписание не создано</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {daysOfWeek.map(day => {
+                              const dayLessons = classSchedule.filter(s => s.dayOfWeek === day);
+                              if (dayLessons.length === 0) return null;
+                              return (
+                                <div key={day} className="space-y-2">
+                                  <p className="font-medium text-sm text-primary">{day}</p>
+                                  {dayLessons.map(lesson => {
+                                    const teacher = users.find(u => u.id === lesson.teacherId);
+                                    return (
+                                      <div key={lesson.id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                                        <div className="space-y-1">
+                                          <p className="font-medium text-sm">{lesson.subject}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {lesson.time} • {teacher?.name || 'Не назначен'}
+                                          </p>
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => deleteSchedule(lesson.id)}
+                                        >
+                                          <Icon name="Trash2" size={14} className="text-destructive" />
+                                        </Button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="homework" className="space-y-4">
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -726,6 +912,13 @@ const Index = () => {
                             </p>
                           )}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteHomework(hw.id)}
+                        >
+                          <Icon name="Trash2" size={16} className="text-destructive" />
+                        </Button>
                       </div>
                     </Card>
                   ))}
@@ -874,10 +1067,76 @@ const Index = () => {
 
             <TabsContent value="homework" className="space-y-4">
               <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <Icon name="BookOpen" size={24} />
-                  Домашние задания
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Icon name="BookOpen" size={24} />
+                    Домашние задания
+                  </h2>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="bg-success hover:bg-success/90">
+                        <Icon name="Plus" size={18} className="mr-2" />
+                        Добавить задание
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Добавить домашнее задание</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Предмет</Label>
+                          <Select value={newHomework.subject} onValueChange={(v) => setNewHomework({...newHomework, subject: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите предмет" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teacherSubjects.map(s => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Класс</Label>
+                          <Select value={newHomework.classId} onValueChange={(v) => setNewHomework({...newHomework, classId: v})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите класс" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {classes.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Описание</Label>
+                          <Textarea
+                            placeholder="Описание задания"
+                            value={newHomework.description}
+                            onChange={(e) => setNewHomework({...newHomework, description: e.target.value})}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Срок сдачи</Label>
+                          <Input
+                            type="date"
+                            value={newHomework.dueDate}
+                            onChange={(e) => setNewHomework({...newHomework, dueDate: e.target.value})}
+                          />
+                        </div>
+
+                        <Button onClick={addHomework} className="w-full bg-success hover:bg-success/90">
+                          Добавить
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
                 <div className="space-y-3">
                   {homeworks
@@ -898,6 +1157,15 @@ const Index = () => {
                               </p>
                             )}
                           </div>
+                          {hw.teacherId === currentUser?.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteHomework(hw.id)}
+                            >
+                              <Icon name="Trash2" size={16} className="text-destructive" />
+                            </Button>
+                          )}
                         </div>
                       </Card>
                     ))}
