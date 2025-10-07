@@ -1569,61 +1569,6 @@ const Index = () => {
 };
 
 export default Index;
-                            type="date"
-                            value={newHomework.dueDate}
-                            onChange={(e) => setNewHomework({...newHomework, dueDate: e.target.value})}
-                          />
-                        </div>
-
-                        <Button onClick={addHomework} className="w-full bg-success hover:bg-success/90">
-                          Добавить
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
-                <div className="space-y-3">
-                  {homeworks
-                    .filter(hw => teacherSubjects.includes(hw.subject))
-                    .map(hw => (
-                      <Card key={hw.id} className="p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-warning">{hw.subject}</Badge>
-                              <Badge variant="outline">{classes.find(c => c.id === hw.classId)?.name}</Badge>
-                            </div>
-                            <p className="text-sm">{hw.description}</p>
-                            {hw.dueDate && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Icon name="Calendar" size={14} />
-                                Срок: {new Date(hw.dueDate).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                          {hw.teacherId === currentUser?.id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteHomework(hw.id)}
-                            >
-                              <Icon name="Trash2" size={16} className="text-destructive" />
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-    );
-  }
-
-  if (currentUser?.role === 'student') {
     const studentGrades = getStudentGrades(currentUser.id);
     const studentClass = classes.find(c => c.id === currentUser.classId);
     const classHomeworks = homeworks.filter(hw => hw.classId === currentUser.classId);
